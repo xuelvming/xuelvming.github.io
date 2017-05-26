@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 	    <meta charset="utf-8"/>
-	    <title>JBake</title>
+	    <title>idea，Java system property and env property</title>
 	    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 	    <meta name="description" content=""/>
 	    <meta name="author" content=""/>
@@ -11,14 +11,14 @@
 	    <meta name="generator" content="JBake"/>
 	
 	    <!-- Le styles -->
-	    <link href="css/bootstrap.min.css" rel="stylesheet"/>
-	    <link href="css/asciidoctor.css" rel="stylesheet"/>
-	    <link href="css/base.css" rel="stylesheet"/>
-	    <link href="css/prettify.css" rel="stylesheet"/>
+	    <link href="../../css/bootstrap.min.css" rel="stylesheet"/>
+	    <link href="../../css/asciidoctor.css" rel="stylesheet"/>
+	    <link href="../../css/base.css" rel="stylesheet"/>
+	    <link href="../../css/prettify.css" rel="stylesheet"/>
 	
 	    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
 	    <!--[if lt IE 9]>
-	      <script src="js/html5shiv.min.js"></script>
+	      <script src="../../js/html5shiv.min.js"></script>
 	    <![endif]-->
 	
 	    <!-- Fav and touch icons -->
@@ -26,7 +26,7 @@
 	    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/ico/apple-touch-icon-114-precomposed.png"/>
 	    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/ico/apple-touch-icon-72-precomposed.png"/>
 	    <link rel="apple-touch-icon-precomposed" href="../assets/ico/apple-touch-icon-57-precomposed.png"/>-->
-	    <link rel="shortcut icon" href="favicon.ico"/>
+	    <link rel="shortcut icon" href="../../favicon.ico"/>
 	</head>
 	<body onload="prettyPrint()">
 	<div id="wrap">
@@ -42,13 +42,13 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="">JBake</a>
+          <a class="navbar-brand" href="../../">JBake</a>
         </div>
         <div class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="about.html">About</a></li>
-            <li><a href="feed.xml">Subscribe</a></li>
+            <li><a href="../../index.html">Home</a></li>
+            <li><a href="../../about.html">About</a></li>
+            <li><a href="../../feed.xml">Subscribe</a></li>
             <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
               <ul class="dropdown-menu">
@@ -68,14 +68,14 @@
 
 	</div>
 		<div class="container">
+	
 			<div class="page-header">
-				<h1>Blog</h1>
+				<h1>idea，Java system property and env property</h1>
 			</div>
-			
-			<div>
-				<a href='blog/2017/idea_env_system_property.html'><h1>idea，Java system property and env property</h1></a>
-				<p>26 May 2017</p>
-				<p><p>这篇博客这要介绍下java system property 和env property的区别，以及如何在intellij idea中进行设置这两种类型的键值对<br/>首先，property可以理解为键值对</p>
+		
+			<p><em>26 May 2017</em></p>
+		
+			<p><p>这篇博客这要介绍下java system property 和env property的区别，以及如何在intellij idea中进行设置这两种类型的键值对<br/>首先，property可以理解为键值对</p>
 <p>我们开发java的时候，经常会遇到多种不同类型的property<br/>有些是存放在内存里的property，有些是以配置文件的方式存在的，比如yaml，比如properties文件，再有就是两类比较特别的property（其实这些<br/>在spring 中都被抽象成了property source，当然，这个是后话，具体的我会写另外的blog记录）</p>
 <p>这里介绍的就是这两类特殊的property， java system property，和env property<br/>前者经常通过命令行java command -Dproperty1=xxx指定<br/>后者通过设置系统环境变量获取，常见于云环境和docker，比如在linux中export，比如在windows中通过系统属性配置</p>
 <p>先看段 stackoverflow上的介绍</p>
@@ -101,37 +101,11 @@ System.getProperty(String key, String def).
 <p>具体的api参见上面的代码</p>
 <p>最后讲下，如何在idea里进行这两种属性，方便线下调试<br/>废话不多说，上图就行<br/>点击右上角的运行项目，如果没有运行过，先运行下<br/>打开编辑界面<br/><img src="../../imgs/idea_system_env_setting.png" alt="idea_system_env_setting.png" title="idea_system_env_setting.png" /></p>
 <p>其中截图中的VM Options的就是设置java system property<br/>而下面Enviroment Variables 就是临时设置系统环境变量。因为如果在系统属性里设置环境变量。需要重启idea。比较麻烦。用这个比较方便。</p></p>
-			</div>
-			
-			<div>
-				<a href='blog/2017/gradle_china_wall.html'><h1>gradle　国内connection error</h1></a>
-				<p>26 May 2017</p>
-				<p><h2>　国内因为某些不可知的原因》》》，导致gradle编译的时候，无法正常下载依赖和插件</h2>
-<p>解决方法<br/>采用阿里云的repository，具体就是配置根目录那个build.gradle文件，分别加入针对dependency和plugins的repository配置</p>
-<pre><code>buildscript {
-    repositories {
-        maven { url &#39;http://maven.aliyun.com/nexus/content/groups/public/&#39; }
-        jcenter()
-    }
-
-}
-</code></pre>
-<pre><code>allprojects {
-    repositories {
-        maven { url &#39;http://maven.aliyun.com/nexus/content/groups/public/&#39; }
-        jcenter()
-    }
-}
-</code></pre>
-<p>其中第一段建议放在文件开始的位置，第二段一定要放在所有的plugins申明前</p></p>
-			</div>
-				
+		
 			<hr />
 			
-			<p>Older posts are available in the <a href='archive.html'>archive</a>.</p>
 		</div>
 	</div>
-	
 	<div>
 			<div id="push"></div>
     
@@ -144,9 +118,9 @@ System.getProperty(String key, String def).
 		    <!-- Le javascript
 		    ================================================== -->
 		    <!-- Placed at the end of the document so the pages load faster -->
-		    <script src="js/jquery-1.11.1.min.js"></script>
-		    <script src="js/bootstrap.min.js"></script>
-		    <script src="js/prettify.js"></script>
+		    <script src="../../js/jquery-1.11.1.min.js"></script>
+		    <script src="../../js/bootstrap.min.js"></script>
+		    <script src="../../js/prettify.js"></script>
     
     	</div>
     </body>
