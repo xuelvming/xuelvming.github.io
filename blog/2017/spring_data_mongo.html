@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 	<head>
 	    <meta charset="utf-8"/>
-	    <title>JBake</title>
+	    <title>spring data mongo 初级教程</title>
 	    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 	    <meta name="description" content=""/>
 	    <meta name="author" content=""/>
@@ -11,14 +11,14 @@
 	    <meta name="generator" content="JBake"/>
 	
 	    <!-- Le styles -->
-	    <link href="css/bootstrap.min.css" rel="stylesheet"/>
-	    <link href="css/asciidoctor.css" rel="stylesheet"/>
-	    <link href="css/base.css" rel="stylesheet"/>
-	    <link href="css/prettify.css" rel="stylesheet"/>
+	    <link href="../../css/bootstrap.min.css" rel="stylesheet"/>
+	    <link href="../../css/asciidoctor.css" rel="stylesheet"/>
+	    <link href="../../css/base.css" rel="stylesheet"/>
+	    <link href="../../css/prettify.css" rel="stylesheet"/>
 	
 	    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
 	    <!--[if lt IE 9]>
-	      <script src="js/html5shiv.min.js"></script>
+	      <script src="../../js/html5shiv.min.js"></script>
 	    <![endif]-->
 	
 	    <!-- Fav and touch icons -->
@@ -26,7 +26,7 @@
 	    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/ico/apple-touch-icon-114-precomposed.png"/>
 	    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/ico/apple-touch-icon-72-precomposed.png"/>
 	    <link rel="apple-touch-icon-precomposed" href="../assets/ico/apple-touch-icon-57-precomposed.png"/>-->
-	    <link rel="shortcut icon" href="favicon.ico"/>
+	    <link rel="shortcut icon" href="../../favicon.ico"/>
 	</head>
 	<body onload="prettyPrint()">
 	<div id="wrap">
@@ -42,13 +42,13 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="">JBake</a>
+          <a class="navbar-brand" href="../../">JBake</a>
         </div>
         <div class="navbar-collapse collapse">
           <ul class="nav navbar-nav">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="about.html">About</a></li>
-            <li><a href="feed.xml">Subscribe</a></li>
+            <li><a href="../../index.html">Home</a></li>
+            <li><a href="../../about.html">About</a></li>
+            <li><a href="../../feed.xml">Subscribe</a></li>
             <li class="dropdown">
               <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
               <ul class="dropdown-menu">
@@ -68,14 +68,14 @@
 
 	</div>
 		<div class="container">
+	
 			<div class="page-header">
-				<h1>Blog</h1>
+				<h1>spring data mongo 初级教程</h1>
 			</div>
-			
-			<div>
-				<a href='blog/2017/spring_data_mongo.html'><h1>spring data mongo 初级教程</h1></a>
-				<p>13 June 2017</p>
-				<p><h1>spring data mongo 初级教程</h1>
+		
+			<p><em>13 June 2017</em></p>
+		
+			<p><h1>spring data mongo 初级教程</h1>
 <p>mongodb是一个比较常见的document based的nosql数据库，我们目前主要存储大量的服务器心跳信息，所以要用到它。java调用mongodb的时候，会有多种database client的选型问题。<br/>我来说说我遇到的一些问题。最早我采用的是原生的mongo db driver v3，这种方式调用和查询很方便，但是当文档类型一致，文档结构却很复杂的时候，通过手动的解析各个字段的时候，会变得很枯燥和很痛苦。<br/>后来转型到spring data mongodb，这个可以直接映射到java object，缺点就是文档不是很人性化，特别是那些api，简直不知道在说什么。于是，我花了不少时间，学习了下通过MongoTemplate（spring data mongodb的核心类）来直接操作mongodb查询的测试用例。主要用来解决负责查询和映射的问题。</p>
 <p>好了，直接进入主题<br/>1 预备条件，一个简单的可以登录创建db，collection的mongo实例<br/>2 配置下maven的依赖</p>
 <pre><code>    &lt;dependency&gt;
@@ -434,138 +434,11 @@ class MyObject {
 }
 </code></pre>
 <p>目前，spring data mongodb后台其实操作的是mongo java driver v2的代码。后期到了spring5.x时代，会迁移到mongo Java driver v3，到时候如果有api变动，我再写个new blog 追踪下。</p></p>
-			</div>
-			
-			<div>
-				<a href='blog/2017/elasticjob_serial1.html'><h1>elastic-job 当当开源分布式job系列(1)</h1></a>
-				<p>27 May 2017</p>
-				<p><h1>elastic-job 当当开源分布式job系列(1)</h1>
-<p>今天是我第一天开始接触elasticjob。主要是单位里领导要求做一套可以分布式的job系统，支持按间隔，或者按照指定时间点进行任务的调度。用户可以通过编写相关的包的方式来编写自己的job逻辑，然后交给我的系统进行调度运行，最好支持高可用和分布式，分片运行的概念。</p>
-<p>如果没有分布式的要求，其实使用java世界里的job大哥大quartz就能很好的完成前面的所有的要求，<br/>问题还是考虑到后期的扩展，高可用，还是需要考虑分布式的方案。最终通过网络搜索，找到了当当网很久前开源的elasticjob。看了下github的地址，最近还是有人提交更新的，应该值得一试。于是就有了今天的blog系列。如果方案可行且领导批准，那我就会把我的心得和使用结果记录在这里。并且应该会有一部分源码的分析。</p>
-<p>首先试elastic-job的地址 <a href="https://github.com/dangdangdotcom/elastic-job">https://github.com/dangdangdotcom/elastic-job</a></p>
-<h3>官方列出的功能列表</h3>
-<pre><code>分布式调度协调
-弹性扩容缩容
-失效转移
-错过执行作业重触发
-作业分片一致性，保证同一分片在分布式环境中仅一个执行实例
-自诊断并修复分布式不稳定造成的问题
-支持并行调度
-支持作业生命周期操作
-丰富的作业类型
-Spring整合以及命名空间提供
-运维平台
-</code></pre>
-<h3>目录结构说明</h3>
-<pre><code>elastic-job-core
-
-elastic-job核心模块，只通过Quartz和Curator就可执行分布式作业。
-
-elastic-job-spring
-
-elastic-job对spring支持的模块，包括命名空间，依赖注入，占位符等。
-
-elastic-job-console
-
-elastic-job web控制台，可将编译之后的war放入tomcat等servlet容器中使用。
-
-elastic-job-example
-
-使用例子。
-
-elastic-job-test
-
-测试elastic-job使用的公用类，使用方无需关注。
-</code></pre>
-<h3>使用方式：</h3>
-<p>引入maven依赖</p>
-<p>elastic-job已经发布到中央仓库，可以在pom.xml文件中直接引入maven坐标。</p>
-<pre><code>        &lt;!-- 引入elastic-job核心模块 --&gt;
-        &lt;dependency&gt;
-            &lt;groupId&gt;com.dangdang&lt;/groupId&gt;
-            &lt;artifactId&gt;elastic-job-core&lt;/artifactId&gt;
-            &lt;version&gt;xxxlatest&lt;/version&gt;
-        &lt;/dependency&gt;
-        &lt;!-- 使用springframework自定义命名空间时引入 --&gt;
-        &lt;dependency&gt;
-            &lt;groupId&gt;com.dangdang&lt;/groupId&gt;
-            &lt;artifactId&gt;elastic-job-spring&lt;/artifactId&gt;
-            &lt;version&gt;xxxlatest&lt;/version&gt;
-        &lt;/dependency&gt;
-</code></pre>
-<p>第一步就是clone整个项目下来，里面有源码和必要的example。源码采用maven进行编译<br/>编译步骤：</p>
-<pre><code>mvn clean install -Dmaven.test.skip=true
-</code></pre>
-<p>进行elastic-job的安装，安装后，所有的源码会放到本地maven仓库里，这里跳过了所有的test<br/>第二步，<br/>编译所有的examples</p>
-<pre><code>cd elastic-job-example
-mvn clean package -Dmaven.test.skip=true
-</code></pre>
-<p>然后就是使用自己心爱的ide打开源码或者example进行编译调试以及学习。我这里用的试idea。当然里面有个小插曲，这里的elastic-job的源码大量采用了lombok进行java代码的生成，主要是一些constructor，getter，setter等。当然好处是减少了模板代码的出现，眼睛不至于这么累。缺点，就是，你得多学个东西，然后idea里或者eclipse里需要自己配置下。具体的网上搜索下就行了。还有就是，有时候代码从example跳转到elasticjob源码的时候，有时候会行数与class有些差异，当然问题不大，强迫症看着有些不舒服。</p>
-<p>先从elastic-job-lite的JavaMain开始进行运行，默认使用h2 in-memory模式记录任务状态，可以通过修改代码的方式，改用mysql记录，方便自己查询结果</p>
-<p>另外，默认JavaMain这个example使用的是zookeeper官方测试框架提供的内存zookeeper实例进行调试，后期需要自己设置zookeeper集群进行维护和开发。<br/>zookeeper就是elasticjob的核心之一，用于维护集群的可用性，任务的分发协商。elasticjob基于Zookeeper和其客户端Curator实现的全局作业注册控制中心。用于注册，控制和协调分布式作业执行。</p>
-<p>以上就是简单的入门环境搭建。期待下个回合的elasticjob的开发实战。</p></p>
-			</div>
-			
-			<div>
-				<a href='blog/2017/gradle_china_wall.html'><h1>gradle　国内connection error</h1></a>
-				<p>26 May 2017</p>
-				<p><h2>　国内因为某些不可知的原因》》》，导致gradle编译的时候，无法正常下载依赖和插件</h2>
-<p>解决方法<br/>采用阿里云的repository，具体就是配置根目录那个build.gradle文件，分别加入针对dependency和plugins的repository配置</p>
-<pre><code>buildscript {
-    repositories {
-        maven { url &#39;http://maven.aliyun.com/nexus/content/groups/public/&#39; }
-        jcenter()
-    }
-
-}
-</code></pre>
-<pre><code>allprojects {
-    repositories {
-        maven { url &#39;http://maven.aliyun.com/nexus/content/groups/public/&#39; }
-        jcenter()
-    }
-}
-</code></pre>
-<p>其中第一段建议放在文件开始的位置，第二段一定要放在所有的plugins申明前</p></p>
-			</div>
-			
-			<div>
-				<a href='blog/2017/idea_env_system_property.html'><h1>idea，Java system property and env property</h1></a>
-				<p>26 May 2017</p>
-				<p><p>这篇博客这要介绍下java system property 和env property的区别，以及如何在intellij idea中进行设置这两种类型的键值对<br/>首先，property可以理解为键值对</p>
-<p>我们开发java的时候，经常会遇到多种不同类型的property<br/>有些是存放在内存里的property，有些是以配置文件的方式存在的，比如yaml，比如properties文件，再有就是两类比较特别的property（其实这些<br/>在spring 中都被抽象成了property source，当然，这个是后话，具体的我会写另外的blog记录）</p>
-<p>这里介绍的就是这两类特殊的property， java system property，和env property<br/>前者经常通过命令行java command -Dproperty1=xxx指定<br/>后者通过设置系统环境变量获取，常见于云环境和docker，比如在linux中export，比如在windows中通过系统属性配置</p>
-<p>先看段 stackoverflow上的介绍</p>
-<p>System properties are set on the Java command line using the -Dpropertyname=value syntax. </p>
-<p>They can also be added at runtime using </p>
-<pre><code class="java">System.setProperty(String key, String value)
-//or
-System.getProperties().load() 
-</code></pre>
-<p>methods.</p>
-<p>To get a specific system property you can use </p>
-<pre><code class="java">System.getProperty(String key)// or 
-System.getProperty(String key, String def).
-</code></pre>
-<p>Environment variables are set in the OS, e.g. in Linux export HOME=/Users/myusername or on Windows SET WINDIR=C:\Windows etc, and, unlike properties, </p>
-<p>may <em>not</em> be set at runtime.</p>
-<p>To get a specific environment variable you can use </p>
-<pre><code class="java">System.getenv(String name).
-</code></pre>
-<h2>总结就是</h2>
-<p>system property 是java特有的，可以运行时修改</p>
-<p>env property 是系统层面的，只读</p>
-<p>具体的api参见上面的代码</p>
-<p>最后讲下，如何在idea里进行这两种属性，方便线下调试<br/>废话不多说，上图就行<br/>点击右上角的运行项目，如果没有运行过，先运行下<br/>打开编辑界面<br/><img src="../../imgs/idea_system_env_setting.png" alt="idea_system_env_setting.png" title="idea_system_env_setting.png" /></p>
-<p>其中截图中的VM Options的就是设置java system property<br/>而下面Enviroment Variables 就是临时设置系统环境变量。因为如果在系统属性里设置环境变量。需要重启idea。比较麻烦。用这个比较方便。</p></p>
-			</div>
-				
+		
 			<hr />
 			
-			<p>Older posts are available in the <a href='archive.html'>archive</a>.</p>
 		</div>
 	</div>
-	
 	<div>
 			<div id="push"></div>
     
@@ -578,9 +451,9 @@ System.getProperty(String key, String def).
 		    <!-- Le javascript
 		    ================================================== -->
 		    <!-- Placed at the end of the document so the pages load faster -->
-		    <script src="js/jquery-1.11.1.min.js"></script>
-		    <script src="js/bootstrap.min.js"></script>
-		    <script src="js/prettify.js"></script>
+		    <script src="../../js/jquery-1.11.1.min.js"></script>
+		    <script src="../../js/bootstrap.min.js"></script>
+		    <script src="../../js/prettify.js"></script>
     
     	</div>
     </body>
