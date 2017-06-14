@@ -1,0 +1,335 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+	    <meta charset="utf-8"/>
+	    <title>redis 本地副本集搭建</title>
+	    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	    <meta name="description" content=""/>
+	    <meta name="author" content=""/>
+	    <meta name="keywords" content=""/>
+	    <meta name="generator" content="JBake"/>
+	
+	    <!-- Le styles -->
+	    <link href="../../css/bootstrap.min.css" rel="stylesheet"/>
+	    <link href="../../css/asciidoctor.css" rel="stylesheet"/>
+	    <link href="../../css/base.css" rel="stylesheet"/>
+	    <link href="../../css/prettify.css" rel="stylesheet"/>
+	
+	    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+	    <!--[if lt IE 9]>
+	      <script src="../../js/html5shiv.min.js"></script>
+	    <![endif]-->
+	
+	    <!-- Fav and touch icons -->
+	    <!--<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/ico/apple-touch-icon-144-precomposed.png"/>
+	    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/ico/apple-touch-icon-114-precomposed.png"/>
+	    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/ico/apple-touch-icon-72-precomposed.png"/>
+	    <link rel="apple-touch-icon-precomposed" href="../assets/ico/apple-touch-icon-57-precomposed.png"/>-->
+	    <link rel="shortcut icon" href="../../favicon.ico"/>
+	</head>
+	<body onload="prettyPrint()">
+	<div id="wrap">
+		<div>
+	
+	  <!-- Fixed navbar -->
+      <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../../">JBake</a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="../../index.html">Home</a></li>
+            <li><a href="../../about.html">About</a></li>
+            <li><a href="../../feed.xml">Subscribe</a></li>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="#">Action</a></li>
+                <li><a href="#">Another action</a></li>
+                <li><a href="#">Something else here</a></li>
+                <li class="divider"></li>
+                <li class="dropdown-header">Nav header</li>
+                <li><a href="#">Separated link</a></li>
+                <li><a href="#">One more separated link</a></li>
+              </ul>
+            </li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+
+	</div>
+		<div class="container">
+	
+			<div class="page-header">
+				<h1>redis 本地副本集搭建</h1>
+			</div>
+		
+			<p><em>14 June 2017</em></p>
+		
+			<p><h1>redis 本地副本集搭建</h1>
+<p>由于工作需要，最近需要连接redis实现热点数据的存储于开发。代码通过本地简易redis服务器的方式开发后，需要跑到线上。但是向公司运维申请redis机器的时候，发现redis其实有两种常用的提供可用性的方案。<br/>1 redis主备（副本集，master slave）模式。<br/>这种是redis现有的提供redis可用性的方案。<br/>2 redis cluster（集群）<br/>这种是后面提到的集群方案。</p>
+<p>早些时候，redis只有方案1，而且方案1中，一开始也只有一主一从的方式。后来，慢慢加入了一主多从，再往后面又加入了一主多从多哨兵的方案。最后才有了cluster集群模式。<br/>这篇博客主要是搭建1主多从多哨兵的HA方案。cluster后面会有新的blog介绍。</p>
+<p>差异就是，cluster模式下，所有的keys是通过hash算法，打散后放到不同的master下，也就是会有多个master，每个master也会有对应的slave。这样就提高了整体的HA，也保证了查询的速度。缺点就是，这种模式下，针对不同key进行运算的时候，可能会出现因为不同key所在的server不一致，出现奇怪的问题。这些还没有详细的处理和研究 ，留待后期分析学习。cluster模式最大的用处是拆分了keys，解决了单台物理机器内存不足导致keys的量受限制的问题，实现视频扩展。</p>
+<p>这里的重点是one master n slaves，n sentinel（哨兵）的部署方式。其中有且只有一个master，多个n slaves，一般master可读写，slaves定期copy master，通常只读，也可以可写，slaves主要是为了分散读的压力，同时，可以在master挂掉的时候，选举出一个slave，作为新的master，并且将其余slaves 自动follow 到这个新的master上。这部分监听的功能就有sentinel是维护。sentinels监听各个服务，发现master down掉的时候，触发选举。当然，为了sentinel本身不成为单点故障，sentinel本身支持HA，推荐基数台sentinel同时运行，比如3台，当有1台sentinel挂掉的时候，其余两台sentinel仍然可以进行投票选举。</p>
+<h1>理论讲完，开始实践：</h1>
+<h2>1， Pre requirement，</h2>
+<p>一台linux机器，我这里用的是centos，其实任何可以编译redis的机器都行。一个可以打开多个窗口的terminal，当然打开多个terminal也行，我是远程访问的linux，推荐使用tmux，这里的redis是3.2.8</p>
+<h2>2，download redis。 unexpress it</h2>
+<h2>3，make redis</h2>
+<p>如果遇到一些小问题，请自行上网解决。</p>
+<h2>4, 准备configuration</h2>
+<p>我这里解压缩编译的目录是<br/>/home/hunter/sources/redis-3.2.8</p>
+<p>编译好后，可执行的redis会出现在src目录，主要是redis-server，redis-sentinel，redis-cli</p>
+<pre><code>cd /home/hunter/sources/redis-3.2.8
+export REDIS_HOME=/home/hunter/sources/redis-3.2.8
+mkdir -p hun_replication/node1
+mkdir -p hun_replication/node2
+mkdir -p hun_replication/node3
+mkdir -p hun_replication/sentinel
+touch $REDIS_HOME/hun_replication/node1/redis_5379.conf
+touch $REDIS_HOME/hun_replication/node2/redis_5380.conf
+touch $REDIS_HOME/hun_replication/node3/redis_5381.conf
+touch $REDIS_HOME/hun_replication/sentinel/sentinel1.conf
+touch $REDIS_HOME/hun_replication/sentinel/sentinel2.conf
+touch $REDIS_HOME/hun_replication/sentinel/sentinel3.conf
+</code></pre>
+<p>这里，redis开头的文件，为redis的服务的配置文件，sentinel开头的文件为sentinel哨兵的配置文件。<br/>这里有三份节点信息，node1作为master，node2，node3作为slaves，同时启动了三个sentinel3，sentinel1，sentinel2，sentinel3</p>
+<p>接下来就是分别编辑这几个confs<br/>vi $REDIS_HOME/hun_replication/node1/redis_5379.conf</p>
+<pre><code>bind 127.0.0.1
+port 5379
+dir &quot;/home/hunter/sources/redis-3.2.8/hun_replication/node1&quot;
+</code></pre>
+<p>vi $REDIS_HOME/hun_replication/node2/redis_5380.conf</p>
+<pre><code>bind 127.0.0.1
+port 5380
+dir &quot;/home/hunter/sources/redis-3.2.8/hun_replication/node2&quot;
+slaveof 10.100.189.30 5379
+</code></pre>
+<p>vi $REDIS_HOME/hun_replication/node2/redis_5381.conf</p>
+<pre><code>bind 127.0.0.1
+port 5381
+dir &quot;/home/hunter/sources/redis-3.2.8/hun_replication/node3&quot;
+slaveof 10.100.189.30 5379
+</code></pre>
+<p>vi $REDIS_HOME/hun_replication/sentinel/sentinel1.conf</p>
+<pre><code># Host and port we will listen for requests on
+bind 127.0.0.1
+port 25379
+
+#
+# &quot;mymaster&quot; is the name of our cluster
+#
+# each sentinel process is paired with a redis-server process
+#
+sentinel monitor mymaster 127.0.0.1 6379 2
+sentinel down-after-milliseconds mymaster 5000
+sentinel parallel-syncs mymaster 1
+sentinel failover-timeout mymaster 10000
+</code></pre>
+<blockquote>
+  <p>sentinel monitor mymaster 127.0.0.1 6379 2<br/>The third "mymaster" here is the name of our repliation. </p>
+</blockquote>
+<p>Each sentinel server needs to have the same name and will point at the <strong>master node</strong> . The final argument (2 here) is how many sentinel nodes are required for quorum when it comes time to vote on a new master. Since we have 3 nodes, we're requiring a quorum of 2 sentinels, allowing us to lose up to one machine. If we had a repliations of 5 machines,then this should be 3, which would allow us to lose 2 machines while still maintaining a majority of nodes participating in quorum.</p>
+<blockquote>
+  <p>sentinel down-after-milliseconds mymaster 5000<br/>a machine will have to be unresponsive for 5 seconds before being classified as down thus triggering a vote to elect a new master node.</p>
+  <p>sentinel parallel-syncs mymaster 1<br/>一次只有有一台slave进行复制<br/>sentinel failover-timeout mymaster 10000<br/>发生failover的时候，如果failover超过这个时间10s，就表示此次failover失败。</p>
+</blockquote>
+<p>vi $REDIS_HOME/hun_replication/sentinel/sentinel2.conf</p>
+<pre><code># Host and port we will listen for requests on
+bind 127.0.0.1
+port 25380
+
+#
+# &quot;mymaster&quot; is the name of our cluster
+#
+# each sentinel process is paired with a redis-server process
+#
+sentinel monitor mymaster 127.0.0.1 6379 2
+sentinel down-after-milliseconds mymaster 5000
+sentinel parallel-syncs mymaster 1
+sentinel failover-timeout mymaster 10000
+</code></pre>
+<p>vi $REDIS_HOME/hun_replication/sentinel/sentinel3.conf</p>
+<pre><code># Host and port we will listen for requests on
+bind 127.0.0.1
+port 25381
+
+#
+# &quot;mymaster&quot; is the name of our cluster
+#
+# each sentinel process is paired with a redis-server process
+#
+sentinel monitor mymaster 127.0.0.1 6379 2
+sentinel down-after-milliseconds mymaster 5000
+sentinel parallel-syncs mymaster 1
+sentinel failover-timeout mymaster 10000
+</code></pre>
+<h1>启动实例</h1>
+<pre><code>cd $REDIS_HOME/hun_replication/node1/
+$REDIS_HOME/src/redis-server redis_5379.conf
+
+cd $REDIS_HOME/hun_replication/node2/
+$REDIS_HOME/src/redis-server redis_5380.conf
+
+cd $REDIS_HOME/hun_replication/node3/
+$REDIS_HOME/src/redis-server redis_5381.conf
+
+cd $REDIS_HOME/hun_replication/sentinel
+$REDIS_HOME/src/redis-sentinel  sentinel1.conf
+$REDIS_HOME/src/redis-sentinel  sentinel2.conf
+$REDIS_HOME/src/redis-sentinel  sentinel3.conf
+
+</code></pre>
+<p>这样就完成了一个redis的master slave sentinel实例<br/>可以干掉master节点node1，会发现redis自动切换了一个新的master</p>
+<pre><code>redis-cli -p 6379 debug segfault //shutdown the master node of the replciation
+</code></pre>
+<p>然后再次启动redis-server</p>
+<pre><code>$REDIS_HOME/src/redis-server $REDIS_HOME/hun_replication/node1/redis_5379.conf
+</code></pre>
+<p>这时候，应该会发现，master已经是node2或者node3，node1自动变成salve。并且，编辑redis_5379.conf 等文件的时候，会发现，redis已经自动修改了配置</p>
+<h1>接下来是我们用spring data redis连接下这个replication</h1>
+<pre><code class="java">package example.springdata.redis.sentinel;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisSentinelConfiguration;
+import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.util.StopWatch;
+
+import javax.annotation.PreDestroy;
+
+/**
+* @author hunter.xue
+ */
+@Configuration
+public class RedisSentinelApplication {
+    static String HOST = null;
+    static RedisSentinelConfiguration SENTINEL_CONFIG = null;
+    static boolean selfReplication = false;
+    static {
+        if (selfReplication) {
+            HOST = &quot;127.0.0.1&quot;;//this is my server address
+            SENTINEL_CONFIG = new RedisSentinelConfiguration().master(&quot;mymaster&quot;) //
+                    .sentinel(HOST, 25379) //
+                    .sentinel(HOST, 25380) //
+                    .sentinel(HOST, 25381);
+        }
+    }
+
+    public
+    @Bean
+    RedisSentinelConfiguration sentinelConfig() {
+        return SENTINEL_CONFIG;
+    }
+
+    public
+    @Bean
+    RedisConnectionFactory connectionFactory() {
+        JedisConnectionFactory jedisConnectionFactory = new JedisConnectionFactory(sentinelConfig());
+        jedisConnectionFactory.setPassword(&quot;NSzTQdollgGQeBsd&quot;);
+        return jedisConnectionFactory;
+    }
+
+
+    @Autowired
+    RedisConnectionFactory factory;
+
+    public static void main(String[] args) throws Exception {
+
+        ApplicationContext context = SpringApplication.run(RedisSentinelApplication.class, args);
+
+        StringRedisTemplate template = context.getBean(StringRedisTemplate.class);
+        template.opsForValue().set(&quot;loop-forever&quot;, &quot;0&quot;);
+
+        StopWatch stopWatch = new StopWatch();
+
+        while (true) {
+
+            try {
+
+                String value = &quot;IT:= &quot; + template.opsForValue().increment(&quot;loop-forever&quot;, 1);
+                printBackFromErrorStateInfoIfStopWatchIsRunning(stopWatch);
+                System.out.println(value);
+
+            } catch (RuntimeException e) {
+
+                System.err.println(e.getCause().getMessage());
+                startStopWatchIfNotRunning(stopWatch);
+            }
+
+            Thread.sleep(1000);
+        }
+    }
+
+    public
+    @Bean
+    StringRedisTemplate redisTemplate() {
+        return new StringRedisTemplate(connectionFactory());
+    }
+
+
+
+
+    /**
+     * Clear database before shut down.
+     */
+    public
+    @PreDestroy
+    void flushTestDb() {
+        factory.getConnection().flushDb();
+    }
+
+    private static void startStopWatchIfNotRunning(StopWatch stopWatch) {
+
+        if (!stopWatch.isRunning()) {
+            stopWatch.start();
+        }
+    }
+
+    private static void printBackFromErrorStateInfoIfStopWatchIsRunning(StopWatch stopWatch) {
+
+        if (stopWatch.isRunning()) {
+            stopWatch.stop();
+            System.err.println(&quot;INFO: Recovered after: &quot; + stopWatch.getLastTaskInfo().getTimeSeconds());
+        }
+    }
+}
+</code></pre></p>
+		
+			<hr />
+			
+		</div>
+	</div>
+	<div>
+			<div id="push"></div>
+    
+		    <div id="footer">
+		      <div class="container">
+		        <p class="muted credit">&copy; 2014 | Mixed with <a href="http://getbootstrap.com/">Bootstrap v3.1.1</a> | Baked with <a href="http://jbake.org">JBake <span>v2.5.1</span></a></p>
+		      </div>
+		    </div>
+	    
+		    <!-- Le javascript
+		    ================================================== -->
+		    <!-- Placed at the end of the document so the pages load faster -->
+		    <script src="../../js/jquery-1.11.1.min.js"></script>
+		    <script src="../../js/bootstrap.min.js"></script>
+		    <script src="../../js/prettify.js"></script>
+    
+    	</div>
+    </body>
+</html>
